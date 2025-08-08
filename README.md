@@ -25,7 +25,8 @@ Bu doküman, **RKE2 Kubernetes** kümesini kube-proxy’siz (`strict` mode) olar
 
 ```bash
 sudo mkdir -p /etc/rancher/rke2
-
+```
+```bash
 sudo tee /etc/rancher/rke2/config.yaml > /dev/null << 'EOF'
 write-kubeconfig-mode: "0644"
 node-ip: "10.20.56.30"
@@ -36,11 +37,17 @@ disable-kube-proxy: true
 tls-san:
   - "10.20.56.30"
 EOF
-
+```
+```bash
 curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=server sh -
+```
+```bash
 systemctl enable rke2-server --now
+```
+```bash
 sudo systemctl start rke2-server.service
-
+```
+```bash
 export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
 ```
 
@@ -87,8 +94,10 @@ kubectl apply -f hubble-metrics-nodeport.yaml -n kube-system
 
   * [http://10.20.56.30:30861/metrics](http://10.20.56.30:30861/metrics)
   * [http://10.20.56.30:30965/metrics](http://10.20.56.30:30965/metrics)
+(Bu endpoint’ler Prometheus’a hedef olarak eklenip Grafana üzerinden görselleştirilebilir.)
 
 * **Hubble UI:**
+
   [http://10.20.56.30:31647](http://10.20.56.30:31647)
 
 ---
@@ -127,6 +136,8 @@ Attacker namespace oluşturalım:
 
 ```bash
 kubectl create ns attacker-ns
+```
+```bash
 kubectl run -n attacker-ns attacker --rm -it --image=alpine -- sh
 apk add curl
 curl nginx.nginx-ns.svc.cluster.local
