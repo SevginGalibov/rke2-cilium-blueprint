@@ -27,7 +27,7 @@ kind: Service
 metadata:
   name: echo-80
   annotations:
-    lbipam.cilium.io/ips: "10.20.56.55"    # istediğin IP
+    lbipam.cilium.io/ips: "1.1.1.55"    # istediğin IP
 spec:
   type: LoadBalancer
   selector:

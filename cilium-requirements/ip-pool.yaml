@@ -4,5 +4,5 @@ metadata:
   name: lb-pool
 spec:
   blocks:
-    - cidr: 10.20.56.0/24
+    - cidr: 1.1.1.1/24
   allowFirstLastIPs: "Yes"
