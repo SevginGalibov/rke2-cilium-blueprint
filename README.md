@@ -53,6 +53,7 @@ export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
 
 ![RKE2 Status](./img/rke-status.png)
 
+Pod’ların Pending durumda kalmasının sebebi, kümede henüz bir CNI (Container Network Interface) eklentisinin kurulu olmaması. RKE2, varsayılan CNI’si devre dışı bırakıldığı için (ör. rke2-canal), pod’lar gerekli ağ yapılandırmasına ulaşamıyor ve başlatılamıyor. 
 ---
 
 ## 🐝 Cilium Kurulumu
