@@ -1,0 +1,9 @@
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: l2announce
+spec:
+  interfaces:
+    - "ens160"           # Senin fiziksel NIC adın
+  loadBalancerIPs: true  # LB IP’leri duyur
+  externalIPs: false     # externalIPs duyurma

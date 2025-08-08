@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+  labels:
+    app: client
+spec:
+  containers:
+  - name: client
+    image: byrnedo/alpine-curl
+    command: ["sleep", "3600"]

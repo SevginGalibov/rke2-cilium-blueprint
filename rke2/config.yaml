@@ -1,0 +1,8 @@
+write-kubeconfig-mode: "0644"
+node-ip: "10.20.56.30"
+disable:
+  - rke2-canal
+  - rke2-ingress-nginx
+disable-kube-proxy: true
+tls-san:
+  - "10.20.56.30"
