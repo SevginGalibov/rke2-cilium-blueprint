@@ -6,3 +6,10 @@ spec:
   blocks:
     - cidr: 1.1.1.1/24
   allowFirstLastIPs: "Yes"
+
+#Hangi Ip den başlamasını istiyorsan aşağıda ki config ile yapabilirsiniz
+#  blocks:
+#    - start: 1.1.1.5
+#      stop: 1.1.1.254
+#  allowFirstLastIPs: "Yes"
+
