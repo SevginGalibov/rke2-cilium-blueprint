@@ -94,6 +94,7 @@ kubectl apply -f hubble-metrics-nodeport.yaml -n kube-system
 
   * [http://10.20.56.30:30861/metrics](http://10.20.56.30:30861/metrics)
   * [http://10.20.56.30:30965/metrics](http://10.20.56.30:30965/metrics)
+
 (Bu endpoint’ler Prometheus’a hedef olarak eklenip Grafana üzerinden görselleştirilebilir.)
 
 * **Hubble UI:**
@@ -124,15 +125,15 @@ Restrict kuralını ekleyelim:
 kubectl apply -f restrict-rule.yaml
 ```
 
-Client’tan erişim:
+Client’tan erişim test edelim:
 
 ```bash
 kubectl -n client-ns exec -it client -- curl nginx.nginx-ns.svc.cluster.local
 ```
-
+Görselde göründüğü gibi trafik akışında hiçbir sorun yok.
 ![Allow Traffic](./img/allow.png)
 
-Attacker namespace oluşturalım:
+Şimdi Restriction rule unu test etmek için Attacker namespace oluşturalım:
 
 ```bash
 kubectl create ns attacker-ns
@@ -142,7 +143,7 @@ kubectl run -n attacker-ns attacker --rm -it --image=alpine -- sh
 apk add curl
 curl nginx.nginx-ns.svc.cluster.local
 ```
-
+Görselde gördündüğü gibi restriction işe yaradı ve istek drop oldu. Nginx pod una sadece client gelebiliyor.
 ![Drop Traffic](./img/drop.png)
 
 ---
