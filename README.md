@@ -144,7 +144,7 @@ curl nginx.nginx-ns.svc.cluster.local
 kubectl apply -f ip-pool.yaml
 ```
 
-![CiliumLoadBalancerIPPool](./img/CiliumLoadBalancerIPPool.png)
+![CiliumLoadBalancerIPPool](./img/CiliumLoadbalancerIPPool.png)
 
 L2 duyurum politikasını ekleyelim:
 
