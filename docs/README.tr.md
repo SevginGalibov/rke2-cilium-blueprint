@@ -1,32 +1,31 @@
-# 🚀 RKE2 + Cilium (Strict Mode) + LB-IPAM & L2 Announcements Setup
+# 🚀 RKE2 + Cilium (Strict Mode) + LB-IPAM & L2 Announcements Kurulumu
 
-This document explains step-by-step how to run an **RKE2 Kubernetes** cluster without kube-proxy (`strict` mode) using **Cilium**, to:
+Bu doküman, **RKE2 Kubernetes** kümesini kube-proxy’siz (`strict` mode) olarak **Cilium** ile çalıştırıp;
 
-* Assign specific **static LoadBalancer IPs**,
-* Announce these IPs on the network via **L2 Announcements** using ARP/NDP,
-* And control traffic with security policies.
+* İstediğimiz **sabit LoadBalancer IP**’lerini atamayı,
+* **L2 Announcements** ile bu IP’leri ağda ARP/NDP üzerinden duyurmayı,
+* Ve güvenlik politikaları ile trafik kontrolü sağlamayı adım adım gösterir.
 
-💡 **Goal:** Create services directly accessible from devices in the **Layer-2** segment without additional components like MetalLB.
+💡 **Hedef:** MetalLB gibi ek bileşenlere gerek kalmadan, **Layer-2** segmentindeki cihazlardan doğrudan erişilebilir servisler oluşturmak.
 
 ---
 
-## 📌 Table of Contents
+## 📌 İçindekiler
 
-1. [RKE2 Installation](#-rke2-installation)
-2. [Cilium Installation](#-cilium-installation)
-3. [Metrics & Hubble UI Exposure](#-metrics--hubble-ui-exposure)
-4. [Network Restriction Example](#-network-restriction-example)
+1. [RKE2 Kurulumu](#-rke2-kurulumu)
+2. [Cilium Kurulumu](#-cilium-kurulumu)
+3. [Metrics & Hubble UI Yayını](#-metrics--hubble-ui-yayını)
+4. [Network Restriction Örneği](#-network-restriction-örneği)
 5. [Cilium LB-IPAM & L2 Announcements](#-cilium-lb-ipam--l2-announcements)
-6. [Demo and Conclusion](#-demo-and-conclusion)
+6. [Demo ve Sonuç](#-demo-ve-sonuç)
 
 ---
 
-## 🛠 RKE2 Installation
+## 🛠 RKE2 Kurulumu
 
 ```bash
 sudo mkdir -p /etc/rancher/rke2
 ```
-
 ```bash
 sudo tee /etc/rancher/rke2/config.yaml > /dev/null << 'EOF'
 write-kubeconfig-mode: "0644"
@@ -39,38 +38,33 @@ tls-san:
   - "10.20.56.30"
 EOF
 ```
-
 ```bash
 curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=server sh -
 ```
-
 ```bash
 systemctl enable rke2-server --now
 ```
-
 ```bash
 sudo systemctl start rke2-server.service
 ```
-
 ```bash
 export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
 ```
 
 ![RKE2 Status](./img/rke-status.png)
 
-Pods remain in **Pending** state because no CNI (Container Network Interface) plugin is installed. Since the default CNI (e.g., rke2-canal) has been disabled, pods cannot obtain the required network configuration.
-
+Pod’ların Pending durumda kalmasının sebebi, kümede henüz bir CNI (Container Network Interface) eklentisinin kurulu olmaması. RKE2, varsayılan CNI’si devre dışı bırakıldığı için (ör. rke2-canal), pod’lar gerekli ağ yapılandırmasına ulaşamıyor ve başlatılamıyor. 
 ---
 
-## 🐝 Cilium Installation
+## 🐝 Cilium Kurulumu
 
-Load the Prometheus CRDs:
+Prometheus CRD’lerini yükleyelim:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
 ```
 
-Install Cilium via Helm:
+Helm ile Cilium’u yükleyelim:
 
 ```bash
 helm upgrade --install cilium cilium/cilium \
@@ -83,9 +77,9 @@ helm upgrade --install cilium cilium/cilium \
 
 ---
 
-## 📊 Metrics & Hubble UI Exposure
+## 📊 Metrics & Hubble UI Yayını
 
-Remove default services and expose them via NodePort:
+Varsayılan servisleri temizleyip, NodePort ile dışa açalım:
 
 ```bash
 kubectl delete svc cilium-agent -n kube-system
@@ -97,67 +91,67 @@ kubectl apply -f hubble-metrics-nodeport.yaml -n kube-system
 
 ![NodePort Services](./img/nodeport.png)
 
-* **Metrics URLs:**
+* **Metrics URL’leri:**
 
   * [http://10.20.56.30:30861/metrics](http://10.20.56.30:30861/metrics)
   * [http://10.20.56.30:30965/metrics](http://10.20.56.30:30965/metrics)
 
-(These endpoints can be added to Prometheus and visualized in Grafana.)
+(Bu endpoint’ler Prometheus’a hedef olarak eklenip Grafana üzerinden görselleştirilebilir.)
 
 * **Hubble UI:**
+
   [http://10.20.56.30:31647](http://10.20.56.30:31647)
 
 ---
 
-## 🔒 Network Restriction Example
+## 🔒 Network Restriction Örneği
 
-Create namespaces:
+Namespace’leri oluşturalım:
 
 ```bash
 kubectl create ns client-ns
 kubectl create ns nginx-ns
 ```
 
-Deploy pods:
+Pod’ları deploy edelim:
 
 ```bash
 kubectl apply -f client.yaml -n client-ns
 kubectl apply -f nginx.yaml -n nginx-ns
 ```
 
-Apply restriction rule:
+Restrict kuralını ekleyelim:
 
 ```bash
 kubectl apply -f restrict-rule.yaml
 ```
 
-Test from client:
+Client’tan erişim test edelim:
 
 ```bash
 kubectl -n client-ns exec -it client -- curl nginx.nginx-ns.svc.cluster.local
 ```
-
+Görselde göründüğü gibi trafik akışında hiçbir sorun yok.
 ![Allow Traffic](./img/allow.png)
 
-Now create an attacker namespace to test:
+Şimdi Restriction rule unu test etmek için Attacker namespace oluşturalım:
 
 ```bash
 kubectl create ns attacker-ns
 ```
-
 ```bash
 kubectl run -n attacker-ns attacker --rm -it --image=alpine -- sh
 apk add curl
 curl nginx.nginx-ns.svc.cluster.local
 ```
-
+Görselde gördündüğü gibi restriction işe yaradı ve istek drop oldu. Nginx pod una sadece client gelebiliyor.
 ![Drop Traffic](./img/drop.png)
 
 ---
 
 ## 🌐 Cilium LB-IPAM & L2 Announcements
 
-Create IP pool:
+İstediğimiz sabit IP’leri atamak için havuz oluşturalım:
 
 ```bash
 kubectl apply -f ip-pool.yaml
@@ -165,7 +159,7 @@ kubectl apply -f ip-pool.yaml
 
 ![CiliumLoadBalancerIPPool](./img/CiliumLoadbalancerIPPool.png)
 
-Add L2 announcement policy:
+L2 duyurum politikasını ekleyelim:
 
 ```bash
 kubectl apply -f cilium-l2ann-policy.yaml
@@ -175,9 +169,9 @@ kubectl apply -f cilium-l2ann-policy.yaml
 
 ---
 
-## 🧪 Demo and Conclusion
+## 🧪 Demo ve Sonuç
 
-Create demo namespace:
+Demo namespace:
 
 ```bash
 kubectl create ns lb-demo
@@ -186,12 +180,14 @@ kubectl apply -f deploy.yaml -n lb-demo
 
 ![LB Service](./img/lb-svc.png)
 
-Browser and curl outputs:
+Tarayıcı ve curl çıktısı:
 ![Curl Test](./img/curl.png)
 ![Browser Test](./img/browser.png)
 
 ---
 
-## 🎯 Summary
+## 🎯 Özet
 
-Using Cilium’s **LB-IPAM** feature, we can assign specific **static LoadBalancer IPs** to services. **L2 Announcements** make these IPs reachable in the same Layer-2 network via ARP/NDP. This eliminates the need for MetalLB and keeps full control in our hands.
+Cilium’un **LB-IPAM** özelliği ile servislerimize istediğimiz **sabit LoadBalancer IP**’lerini atayacağız.
+**L2 Announcements** sayesinde bu IP’leri ağda ARP/NDP üzerinden duyurarak, aynı Layer-2 segmentindeki cihazların doğrudan erişmesini sağlayacağız.
+Böylece MetalLB gibi ek bileşenlere gerek kalmadan, kontrol tamamen elimizde olacak şekilde küme dışı erişim sağlayacağız.
